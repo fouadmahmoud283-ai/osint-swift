@@ -28,8 +28,14 @@ class Settings(BaseSettings):
     
     # Database
     database_url: str = Field(
-        default="postgresql://swift:swift123@localhost:5432/swift_db",
+        default="postgresql://swift:swift123@localhost:5432/swift",
         description="PostgreSQL connection string"
+    )
+    
+    # Ingestion Service
+    ingestion_service_url: str = Field(
+        default="http://swift-ingestion-worker:8001",
+        description="Ingestion service base URL"
     )
     
     # Celery/Redis

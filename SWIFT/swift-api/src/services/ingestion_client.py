@@ -1,31 +1,21 @@
 """Client for communicating with ingestion service."""
 
-from typing import Optional
+import httpx
+from typing import Optional, Dict, Any, List
 from uuid import UUID
 
-# This will import from swift-ingestion
-# In a real deployment, this would be a separate package or use API calls
-import sys
-from pathlib import Path
-
-# Add swift-ingestion to path
-ingestion_path = Path(__file__).parent.parent.parent.parent / "swift-ingestion" / "src"
-sys.path.insert(0, str(ingestion_path))
-
-from models import IngestionJobCreate, JobStatus, SourceType
-from services import IngestionService, celery_app
+from ..models import JobStatus, SourceType
+from ..config import settings
 
 
 class IngestionClient:
     """
-    Client for interacting with the ingestion service.
-    
-    In a microservices architecture, this would make HTTP calls.
-    For now, it directly uses the ingestion service.
+    Client for interacting with the ingestion service via HTTP.
     """
     
     def __init__(self):
-        self.service = IngestionService()
+        self.base_url = settings.ingestion_service_url
+        self.client = httpx.AsyncClient(timeout=30.0)
     
     async def create_job(
         self,
@@ -33,47 +23,25 @@ class IngestionClient:
         parameters: dict,
         case_id: Optional[UUID] = None,
         metadata: dict = None
-    ):
-        """Create a new ingestion job and queue it for execution."""
-        # Convert string to enum
-        try:
-            source_enum = SourceType(source_type)
-        except ValueError:
-            raise ValueError(f"Invalid source type: {source_type}")
+    ) -> Dict[str, Any]:
+        """Create a new ingestion job via HTTP."""
+        payload = {
+            "source_type": source_type,
+            "parameters": parameters,
+            "metadata": metadata or {}
+        }
+        if case_id:
+            payload["case_id"] = str(case_id)
         
-        # Create job
-        job_create = IngestionJobCreate(
-            source_type=source_enum,
-            parameters=parameters,
-            case_id=case_id,
-            metadata=metadata or {}
-        )
-        
-        job = self.service.create_job(job_create)
-        
-        # Queue job for asynchronous execution
-        task = celery_app.send_task(
-            'tasks.execute_ingestion_job',
-            args=[str(job.id)]
-        )
-        
-        # Update job with Celery task ID
-        from db import get_db
-        from storage import JobRepository
-        
-        with get_db() as session:
-            db_job = JobRepository.get_job(session, job.id)
-            if db_job:
-                db_job.celery_task_id = task.id
-                session.flush()
-        
-        job.celery_task_id = task.id
-        
-        return job
+        response = await self.client.post(f"{self.base_url}/jobs", json=payload)
+        response.raise_for_status()
+        return response.json()
     
-    async def get_job(self, job_id: UUID):
-        """Get job by ID."""
-        return self.service.get_job(job_id)
+    async def get_job(self, job_id: UUID) -> Dict[str, Any]:
+        """Get job by ID via HTTP."""
+        response = await self.client.get(f"{self.base_url}/jobs/{job_id}")
+        response.raise_for_status()
+        return response.json()
     
     async def list_jobs(
         self,
@@ -82,19 +50,26 @@ class IngestionClient:
         case_id: Optional[UUID] = None,
         limit: int = 100,
         offset: int = 0
-    ):
-        """List jobs with filters."""
-        status_enum = JobStatus(status) if status else None
-        source_enum = SourceType(source_type) if source_type else None
+    ) -> List[Dict[str, Any]]:
+        """List jobs with filters via HTTP."""
+        params = {"limit": limit, "offset": offset}
+        if status:
+            params["status"] = status
+        if source_type:
+            params["source_type"] = source_type
+        if case_id:
+            params["case_id"] = str(case_id)
         
-        return self.service.list_jobs(
-            status=status_enum,
-            source_type=source_enum,
-            case_id=case_id,
-            limit=limit,
-            offset=offset
-        )
+        response = await self.client.get(f"{self.base_url}/jobs", params=params)
+        response.raise_for_status()
+        return response.json()
     
-    async def get_job_stats(self, job_id: UUID):
-        """Get job statistics."""
-        return self.service.get_job_stats(job_id)
+    async def get_job_stats(self, job_id: UUID) -> Dict[str, Any]:
+        """Get job statistics via HTTP."""
+        response = await self.client.get(f"{self.base_url}/jobs/{job_id}/stats")
+        response.raise_for_status()
+        return response.json()
+    
+    async def close(self):
+        """Close the HTTP client."""
+        await self.client.aclose()
