@@ -47,7 +47,7 @@ class IngestionJobDB(Base):
     error_details = Column(JSON, nullable=True)
     
     # Metadata
-    metadata = Column(JSON, nullable=False, default=dict)
+    metadata_json = Column("metadata", JSON, nullable=False, default=dict)
     celery_task_id = Column(String(255), nullable=True, index=True)
     
     def __repr__(self) -> str:
@@ -81,7 +81,7 @@ class EvidenceDocumentDB(Base):
     source_timestamp = Column(DateTime, nullable=True, index=True)
     
     # Metadata
-    metadata = Column(JSON, nullable=False, default=dict)
+    metadata_json = Column("metadata", JSON, nullable=False, default=dict)
     
     # Chain of custody
     extraction_version = Column(String(50), nullable=True)

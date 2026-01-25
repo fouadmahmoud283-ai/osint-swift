@@ -33,7 +33,7 @@ class JobRepository:
             status=job.status,
             parameters=job.parameters,
             case_id=job.case_id,
-            metadata=job.metadata,
+            metadata_json=job.metadata,
             celery_task_id=job.celery_task_id,
         )
         session.add(db_job)
@@ -172,7 +172,7 @@ class EvidenceRepository:
             content_type=evidence.content_type,
             evidence_type=evidence.evidence_type,
             source_timestamp=evidence.source_timestamp,
-            metadata=evidence.metadata,
+            metadata_json=evidence.metadata,
             processing_status=evidence.processing_status,
         )
         session.add(db_evidence)
