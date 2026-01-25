@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 
-from .models import EvidenceType, JobStatus, SourceType
+from ..models import EvidenceType, JobStatus, SourceType
 
 Base = declarative_base()
 
