@@ -338,10 +338,12 @@
           jurisdiction_code: "us_de"
         },
         news_api: {
+          endpoint: "top-headlines",
           query: "Tesla OR Elon Musk",
-          from_date: "2024-01-01",
+          country: "us",
           language: "en",
           sort_by: "relevancy",
+          page_size: 20,
           max_articles: 25
         }
       };
@@ -396,9 +398,19 @@
           const caseId = document.getElementById("job-case").value.trim();
           const parameters = safeJson(document.getElementById("job-params").value);
           const metadata = safeJson(document.getElementById("job-meta").value);
-          if (sourceType === "news_api" && !parameters.query) {
-            updateResponse("create-response", "ERR", "-", null, "news_api requires a 'query' field.");
-            return;
+          if (sourceType === "news_api") {
+            const endpoint = parameters.endpoint || "everything";
+            if (endpoint === "everything" && !parameters.query) {
+              updateResponse("create-response", "ERR", "-", null, "news_api 'everything' requires a 'query' field.");
+              return;
+            }
+            if (endpoint === "top-headlines") {
+              const hasScope = parameters.country || parameters.category || parameters.sources || parameters.query;
+              if (!hasScope) {
+                updateResponse("create-response", "ERR", "-", null, "news_api 'top-headlines' requires country, category, sources, or query.");
+                return;
+              }
+            }
           }
           if (sourceType === "opencorporates" && !parameters.company_name) {
             updateResponse("create-response", "ERR", "-", null, "opencorporates requires a 'company_name' field.");

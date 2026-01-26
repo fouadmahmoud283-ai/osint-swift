@@ -94,34 +94,56 @@ class NewsAPIConnector(BaseConnector):
         Yields:
             ConnectorResult with news article data
         """
+        endpoint = parameters.get('endpoint', 'everything')
         query = parameters.get('query')
-        if not query:
-            raise ValueError("query parameter is required")
+        if endpoint == 'everything' and not query:
+            raise ValueError("query parameter is required for 'everything' endpoint")
         
-        # Parse date range
-        from_date = parameters.get('from_date')
-        to_date = parameters.get('to_date')
-        
-        # Default to last 30 days if no dates specified
-        if not from_date:
-            from_date = (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m-%d')
-        if not to_date:
-            to_date = datetime.utcnow().strftime('%Y-%m-%d')
-        
-        # Build search parameters
-        search_params = {
-            'q': query,
-            'from': from_date,
-            'to': to_date,
-            'pageSize': parameters.get('page_size', 20),
-            'sortBy': parameters.get('sort_by', 'relevancy'),
-        }
-        
-        # Optional parameters
-        if parameters.get('language'):
-            search_params['language'] = parameters['language']
-        if parameters.get('domains'):
-            search_params['domains'] = parameters['domains']
+        if endpoint == 'top-headlines':
+            search_params = {
+                'q': query,
+                'pageSize': parameters.get('page_size', 20),
+                'page': 1,
+            }
+            if parameters.get('country'):
+                search_params['country'] = parameters['country']
+            if parameters.get('category'):
+                search_params['category'] = parameters['category']
+            if parameters.get('sources'):
+                search_params['sources'] = parameters['sources']
+
+            if not any([
+                search_params.get('country'),
+                search_params.get('category'),
+                search_params.get('sources'),
+                search_params.get('q')
+            ]):
+                raise ValueError("top-headlines requires at least one of: country, category, sources, or query")
+        else:
+            # Parse date range
+            from_date = parameters.get('from_date')
+            to_date = parameters.get('to_date')
+
+            # Default to last 30 days if no dates specified
+            if not from_date:
+                from_date = (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m-%d')
+            if not to_date:
+                to_date = datetime.utcnow().strftime('%Y-%m-%d')
+
+            # Build search parameters
+            search_params = {
+                'q': query,
+                'from': from_date,
+                'to': to_date,
+                'pageSize': parameters.get('page_size', 20),
+                'sortBy': parameters.get('sort_by', 'relevancy'),
+            }
+
+            # Optional parameters
+            if parameters.get('language'):
+                search_params['language'] = parameters['language']
+            if parameters.get('domains'):
+                search_params['domains'] = parameters['domains']
         
         try:
             # Search for articles using 'everything' endpoint (more flexible)
@@ -138,7 +160,7 @@ class NewsAPIConnector(BaseConnector):
                     extra={'page': page, 'query': query}
                 )
                 
-                result = await self._make_request('everything', search_params)
+                result = await self._make_request(endpoint, search_params)
                 
                 articles = result.get('articles', [])
                 
@@ -213,6 +235,11 @@ class NewsAPIConnector(BaseConnector):
                 raise ValueError("Invalid News API key. Get one at https://newsapi.org/register")
             elif e.response.status_code == 429:
                 raise ValueError("News API rate limit exceeded. Free tier: 1000 requests/day")
+            elif e.response.status_code == 426:
+                raise ValueError(
+                    "News API returned 426 Upgrade Required. Your plan/key may not allow this endpoint. "
+                    "Try using endpoint=top-headlines or upgrade your NewsAPI plan."
+                )
             raise
             
         except Exception as e:
