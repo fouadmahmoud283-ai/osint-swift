@@ -135,8 +135,9 @@ async def list_jobs(
             limit=limit,
             offset=offset,
         )
+        payload = [_serialize_job_db(job) for job in jobs]
 
-    return [_serialize_job_db(job) for job in jobs]
+    return payload
 
 
 @app.get("/jobs/{job_id}/stats")

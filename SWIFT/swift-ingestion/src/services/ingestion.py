@@ -38,6 +38,27 @@ class IngestionService:
     def __init__(self):
         self.job_repo = JobRepository()
         self.evidence_repo = EvidenceRepository()
+
+    @staticmethod
+    def _to_model(db_job) -> IngestionJob:
+        """Convert DB model to Pydantic model safely."""
+        return IngestionJob(
+            id=db_job.id,
+            source_type=db_job.source_type,
+            status=db_job.status,
+            parameters=db_job.parameters,
+            case_id=db_job.case_id,
+            created_at=db_job.created_at,
+            started_at=db_job.started_at,
+            completed_at=db_job.completed_at,
+            total_items=db_job.total_items,
+            successful_items=db_job.successful_items,
+            failed_items=db_job.failed_items,
+            error_message=db_job.error_message,
+            error_details=db_job.error_details,
+            metadata=db_job.metadata_json,
+            celery_task_id=db_job.celery_task_id,
+        )
     
     def create_job(self, job_create: IngestionJobCreate) -> IngestionJob:
         """
@@ -92,7 +113,7 @@ class IngestionService:
                 logger.error(f"Job {job_id} not found")
                 return
             
-            job = IngestionJob.model_validate(db_job)
+            job = self._to_model(db_job)
         
         try:
             # Update status to running
@@ -283,7 +304,7 @@ class IngestionService:
         with get_db() as session:
             db_job = self.job_repo.get_job(session, job_id)
             if db_job:
-                return IngestionJob.model_validate(db_job)
+                return self._to_model(db_job)
         return None
     
     def list_jobs(
@@ -299,7 +320,7 @@ class IngestionService:
             db_jobs = self.job_repo.list_jobs(
                 session, status, source_type, case_id, limit, offset
             )
-            return [IngestionJob.model_validate(job) for job in db_jobs]
+            return [self._to_model(job) for job in db_jobs]
     
     def get_job_stats(self, job_id: UUID):
         """Get job statistics."""
