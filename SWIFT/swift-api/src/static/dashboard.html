@@ -221,10 +221,7 @@
         <div class="row">
           <div>
             <label for="job-params">Parameters (JSON)</label>
-            <textarea id="job-params">{
-  "company_name": "Tesla Inc",
-  "jurisdiction_code": "us_de"
-}</textarea>
+            <textarea id="job-params"></textarea>
           </div>
           <div>
             <label for="job-meta">Metadata (JSON)</label>
@@ -335,6 +332,26 @@
         }
       };
 
+      const PARAM_TEMPLATES = {
+        opencorporates: {
+          company_name: "Tesla Inc",
+          jurisdiction_code: "us_de"
+        },
+        news_api: {
+          query: "Tesla OR Elon Musk",
+          from_date: "2024-01-01",
+          language: "en",
+          sort_by: "relevancy",
+          max_articles: 25
+        }
+      };
+
+      const syncParamsTemplate = () => {
+        const source = document.getElementById("job-source").value;
+        const template = PARAM_TEMPLATES[source] || {};
+        document.getElementById("job-params").value = JSON.stringify(template, null, 2);
+      };
+
       document.getElementById("btn-health").addEventListener("click", async () => {
         const dot = document.getElementById("health-dot");
         const label = document.getElementById("health-label");
@@ -379,6 +396,14 @@
           const caseId = document.getElementById("job-case").value.trim();
           const parameters = safeJson(document.getElementById("job-params").value);
           const metadata = safeJson(document.getElementById("job-meta").value);
+          if (sourceType === "news_api" && !parameters.query) {
+            updateResponse("create-response", "ERR", "-", null, "news_api requires a 'query' field.");
+            return;
+          }
+          if (sourceType === "opencorporates" && !parameters.company_name) {
+            updateResponse("create-response", "ERR", "-", null, "opencorporates requires a 'company_name' field.");
+            return;
+          }
           const payload = {
             source_type: sourceType,
             parameters,
@@ -400,7 +425,7 @@
 
       document.getElementById("btn-clear-create").addEventListener("click", () => {
         document.getElementById("job-case").value = "";
-        document.getElementById("job-params").value = "{}";
+        syncParamsTemplate();
         document.getElementById("job-meta").value = "{}";
         document.getElementById("create-response").textContent = "No job created yet.";
       });
@@ -455,6 +480,8 @@
       });
 
       setBadge(baseUrl);
+      document.getElementById("job-source").addEventListener("change", syncParamsTemplate);
+      syncParamsTemplate();
     </script>
   </body>
 </html>
