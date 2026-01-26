@@ -14,6 +14,38 @@ router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
 ingestion_client = IngestionClient()
 
 
+def _job_from_payload(job: dict) -> JobResponse:
+    return JobResponse(
+        id=str(job.get("id")),
+        source_type=job.get("source_type"),
+        status=job.get("status"),
+        parameters=job.get("parameters", {}),
+        case_id=job.get("case_id"),
+        created_at=job.get("created_at"),
+        started_at=job.get("started_at"),
+        completed_at=job.get("completed_at"),
+        total_items=job.get("total_items", 0),
+        successful_items=job.get("successful_items", 0),
+        failed_items=job.get("failed_items", 0),
+        error_message=job.get("error_message"),
+        metadata=job.get("metadata", {}),
+        celery_task_id=job.get("celery_task_id"),
+    )
+
+
+def _stats_from_payload(stats: dict) -> JobStatsResponse:
+    return JobStatsResponse(
+        job_id=str(stats.get("job_id")),
+        status=stats.get("status"),
+        duration_seconds=stats.get("duration_seconds"),
+        total_items=stats.get("total_items", 0),
+        successful_items=stats.get("successful_items", 0),
+        failed_items=stats.get("failed_items", 0),
+        avg_item_size_bytes=stats.get("avg_item_size_bytes"),
+        total_size_bytes=stats.get("total_size_bytes", 0),
+    )
+
+
 class CreateJobRequest(BaseModel):
     """Request to create an ingestion job."""
     
@@ -70,22 +102,7 @@ async def create_ingestion_job(request: CreateJobRequest):
             metadata=request.metadata
         )
         
-        return JobResponse(
-            id=str(job.id),
-            source_type=job.source_type.value,
-            status=job.status.value,
-            parameters=job.parameters,
-            case_id=str(job.case_id) if job.case_id else None,
-            created_at=job.created_at.isoformat(),
-            started_at=job.started_at.isoformat() if job.started_at else None,
-            completed_at=job.completed_at.isoformat() if job.completed_at else None,
-            total_items=job.total_items,
-            successful_items=job.successful_items,
-            failed_items=job.failed_items,
-            error_message=job.error_message,
-            metadata=job.metadata,
-            celery_task_id=job.celery_task_id
-        )
+        return _job_from_payload(job)
         
     except ValueError as e:
         raise HTTPException(
@@ -112,22 +129,7 @@ async def get_ingestion_job(job_id: str):
                 detail=f"Job {job_id} not found"
             )
         
-        return JobResponse(
-            id=str(job.id),
-            source_type=job.source_type.value,
-            status=job.status.value,
-            parameters=job.parameters,
-            case_id=str(job.case_id) if job.case_id else None,
-            created_at=job.created_at.isoformat(),
-            started_at=job.started_at.isoformat() if job.started_at else None,
-            completed_at=job.completed_at.isoformat() if job.completed_at else None,
-            total_items=job.total_items,
-            successful_items=job.successful_items,
-            failed_items=job.failed_items,
-            error_message=job.error_message,
-            metadata=job.metadata,
-            celery_task_id=job.celery_task_id
-        )
+        return _job_from_payload(job)
         
     except ValueError:
         raise HTTPException(
@@ -154,25 +156,7 @@ async def list_ingestion_jobs(
             offset=offset
         )
         
-        return [
-            JobResponse(
-                id=str(job.id),
-                source_type=job.source_type.value,
-                status=job.status.value,
-                parameters=job.parameters,
-                case_id=str(job.case_id) if job.case_id else None,
-                created_at=job.created_at.isoformat(),
-                started_at=job.started_at.isoformat() if job.started_at else None,
-                completed_at=job.completed_at.isoformat() if job.completed_at else None,
-                total_items=job.total_items,
-                successful_items=job.successful_items,
-                failed_items=job.failed_items,
-                error_message=job.error_message,
-                metadata=job.metadata,
-                celery_task_id=job.celery_task_id
-            )
-            for job in jobs
-        ]
+        return [_job_from_payload(job) for job in jobs]
         
     except Exception as e:
         raise HTTPException(
@@ -194,16 +178,7 @@ async def get_job_stats(job_id: str):
                 detail=f"Job {job_id} not found"
             )
         
-        return JobStatsResponse(
-            job_id=str(stats.job_id),
-            status=stats.status.value,
-            duration_seconds=stats.duration_seconds,
-            total_items=stats.total_items,
-            successful_items=stats.successful_items,
-            failed_items=stats.failed_items,
-            avg_item_size_bytes=stats.avg_item_size_bytes,
-            total_size_bytes=stats.total_size_bytes
-        )
+        return _stats_from_payload(stats)
         
     except ValueError:
         raise HTTPException(

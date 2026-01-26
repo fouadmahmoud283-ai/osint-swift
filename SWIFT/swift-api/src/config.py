@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     
     # Ingestion Service
     ingestion_service_url: str = Field(
-        default="http://swift-ingestion-worker:8001",
+        default="http://localhost:8001",
         description="Ingestion service base URL"
     )
     
