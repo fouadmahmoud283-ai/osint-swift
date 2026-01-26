@@ -70,13 +70,15 @@ async def create_job(request: IngestionJobCreate):
 
         with get_db() as session:
             db_job = job_repo.get_job(session, job.id)
-            if db_job:
-                db_job.celery_task_id = task.id
-                session.flush()
-            else:
+            if not db_job:
                 raise HTTPException(status_code=404, detail=f"Job {job.id} not found")
 
-        return _serialize_job_db(db_job)
+            db_job.celery_task_id = task.id
+            session.flush()
+            session.refresh(db_job)
+            payload = _serialize_job_db(db_job)
+
+        return payload
     except Exception as exc:
         logger.error("Failed to create job", extra={"error": str(exc)})
         raise HTTPException(
