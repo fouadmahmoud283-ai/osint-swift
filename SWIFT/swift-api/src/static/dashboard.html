@@ -3,20 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SWIFT API Dashboard</title>
+    <title>SWIFT OSINT Console</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
     <style>
       :root {
-        color-scheme: light;
-        --bg: #0b1220;
-        --panel: #121a2b;
-        --card: #0f172a;
-        --muted: #94a3b8;
+        color-scheme: dark;
+        --bg: #05070e;
+        --bg-elevated: #0a0f1e;
+        --panel: rgba(15, 23, 42, 0.7);
+        --card: #0b1220;
+        --muted: #7a8aa3;
         --text: #e2e8f0;
-        --accent: #38bdf8;
+        --accent: #4ad7ff;
         --accent-2: #22c55e;
         --danger: #ef4444;
         --warning: #f59e0b;
-        --border: #1e293b;
+        --border: #1f2a44;
+        --glow: rgba(74, 215, 255, 0.2);
       }
 
       * {
@@ -26,25 +32,113 @@
       body {
         margin: 0;
         font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-        background: var(--bg);
+        background: radial-gradient(circle at top, #0a1427 0%, #05070e 55%, #05070e 100%);
         color: var(--text);
+        min-height: 100vh;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        min-height: 100vh;
+      }
+
+      aside {
+        background: #070b16;
+        border-right: 1px solid var(--border);
+        padding: 28px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+      }
+
+      .brand i {
+        font-size: 22px;
+        color: var(--accent);
+      }
+
+      .nav-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .nav-title {
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 1px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: var(--text);
+        background: rgba(15, 23, 42, 0.45);
+        border: 1px solid rgba(31, 42, 68, 0.6);
+      }
+
+      .nav-item i {
+        color: var(--accent);
       }
 
       header {
-        padding: 24px 28px;
-        background: linear-gradient(135deg, #0b1220 0%, #111827 100%);
+        padding: 24px 28px 18px;
         border-bottom: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(10, 15, 30, 0.95) 0%, rgba(10, 15, 30, 0.6) 100%);
       }
 
       header h1 {
-        margin: 0 0 6px;
+        margin: 0;
         font-size: 26px;
         letter-spacing: 0.3px;
       }
 
       header p {
-        margin: 0;
+        margin: 6px 0 0;
         color: var(--muted);
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(8, 14, 28, 0.7);
+        border: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .badge i {
+        color: var(--accent);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--warning);
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
       }
 
       main {
@@ -57,17 +151,25 @@
       .card {
         background: var(--panel);
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 18px;
         display: flex;
         flex-direction: column;
         gap: 12px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+        box-shadow: 0 0 0 1px rgba(74, 215, 255, 0.06), 0 20px 35px rgba(2, 6, 23, 0.5);
+        backdrop-filter: blur(12px);
       }
 
       .card h2 {
         margin: 0;
-        font-size: 18px;
+        font-size: 17px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .card h2 i {
+        color: var(--accent);
       }
 
       .card small {
@@ -89,12 +191,19 @@
 
       input, select, textarea {
         width: 100%;
-        padding: 9px 10px;
-        border-radius: 10px;
-        border: 1px solid var(--border);
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(31, 42, 68, 0.8);
         background: var(--card);
         color: var(--text);
         font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input:focus, select:focus, textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--glow);
       }
 
       textarea {
@@ -106,16 +215,26 @@
       button {
         border: none;
         padding: 10px 14px;
-        border-radius: 10px;
+        border-radius: 12px;
         background: var(--accent);
-        color: #0b1220;
+        color: #031018;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 12px 20px rgba(74, 215, 255, 0.2);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
       }
 
       button.secondary {
-        background: #334155;
+        background: #1f2937;
         color: var(--text);
+        box-shadow: none;
       }
 
       button.success {
@@ -126,12 +245,13 @@
       button.danger {
         background: var(--danger);
         color: #fff;
+        box-shadow: none;
       }
 
       .response {
-        background: #0b1220;
-        border: 1px dashed #1f2a44;
-        border-radius: 10px;
+        background: rgba(5, 10, 20, 0.7);
+        border: 1px dashed rgba(74, 215, 255, 0.25);
+        border-radius: 12px;
         padding: 12px;
         font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-size: 12px;
@@ -140,33 +260,34 @@
         white-space: pre-wrap;
       }
 
-      .badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: #0b1220;
-        border: 1px solid var(--border);
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--warning);
-      }
-
       .grid-span {
         grid-column: span 2;
       }
 
       footer {
-        padding: 16px 28px 30px;
+        padding: 18px 28px 30px;
         color: var(--muted);
         font-size: 12px;
+        border-top: 1px solid var(--border);
+        background: rgba(8, 12, 24, 0.8);
+      }
+
+      @media (max-width: 1100px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+
+        aside {
+          flex-direction: row;
+          flex-wrap: wrap;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .nav-section {
+          flex-direction: row;
+          flex-wrap: wrap;
+        }
       }
 
       @media (max-width: 900px) {
@@ -177,120 +298,145 @@
     </style>
   </head>
   <body>
-    <header>
-      <h1>SWIFT API Dashboard</h1>
-      <p>Interactive testing & visualization for the SWIFT API Gateway endpoints.</p>
-      <div class="badge" id="api-base">Base URL: <strong></strong></div>
-      <div class="badge"><span class="status-dot" id="health-dot"></span> Health: <span id="health-label">unknown</span></div>
-    </header>
-
-    <main>
-      <section class="card">
-        <h2>Health & Info</h2>
-        <small>Quick checks for API availability.</small>
-        <div class="row">
-          <button id="btn-health">Check /health</button>
-          <button id="btn-root" class="secondary">Get /</button>
+    <div class="shell">
+      <aside>
+        <div class="brand">
+          <i class="ri-shield-keyhole-line"></i>
+          <span>SWIFT OSINT Console</span>
         </div>
-        <div class="response" id="health-response">Run a check to see response.</div>
-      </section>
-
-      <section class="card">
-        <h2>Sources</h2>
-        <small>Available ingestion data sources.</small>
-        <button id="btn-sources" class="secondary">GET /ingestion/sources</button>
-        <div class="response" id="sources-response">No data yet.</div>
-      </section>
-
-      <section class="card grid-span">
-        <h2>Create Ingestion Job</h2>
-        <small>POST /ingestion/jobs</small>
-        <div class="row">
-          <div>
-            <label for="job-source">Source Type</label>
-            <select id="job-source">
-              <option value="opencorporates">opencorporates</option>
-              <option value="news_api">news_api</option>
-            </select>
-          </div>
-          <div>
-            <label for="job-case">Case ID (optional)</label>
-            <input id="job-case" placeholder="UUID (optional)" />
-          </div>
+        <div class="nav-section">
+          <div class="nav-title">Operations</div>
+          <div class="nav-item"><i class="ri-dashboard-2-line"></i>Mission Control</div>
+          <div class="nav-item"><i class="ri-radar-line"></i>Ingestion Telemetry</div>
+          <div class="nav-item"><i class="ri-database-2-line"></i>Evidence Store</div>
         </div>
-        <div class="row">
-          <div>
-            <label for="job-params">Parameters (JSON)</label>
-            <textarea id="job-params"></textarea>
+        <div class="nav-section">
+          <div class="nav-title">Security</div>
+          <div class="nav-item"><i class="ri-lock-2-line"></i>Access Policies</div>
+          <div class="nav-item"><i class="ri-shield-check-line"></i>Audit Trails</div>
+        </div>
+      </aside>
+
+      <div>
+        <header>
+          <h1>SWIFT OSINT Dashboard</h1>
+          <p>Operational testing, endpoint monitoring, and evidence validation workspace.</p>
+          <div class="header-actions">
+            <div class="badge" id="api-base"><i class="ri-link"></i> Base URL: <strong></strong></div>
+            <div class="badge"><span class="status-dot" id="health-dot"></span> Health: <span id="health-label">unknown</span></div>
+            <div class="badge"><i class="ri-time-line"></i> Live telemetry</div>
           </div>
-          <div>
-            <label for="job-meta">Metadata (JSON)</label>
-            <textarea id="job-meta">{
+        </header>
+
+        <main>
+          <section class="card">
+            <h2><i class="ri-heart-pulse-line"></i>Health & Info</h2>
+            <small>Quick checks for API availability.</small>
+            <div class="row">
+              <button id="btn-health"><i class="ri-pulse-line"></i>Check /health</button>
+              <button id="btn-root" class="secondary"><i class="ri-home-4-line"></i>Get /</button>
+            </div>
+            <div class="response" id="health-response">Run a check to see response.</div>
+          </section>
+
+          <section class="card">
+            <h2><i class="ri-database-line"></i>Sources</h2>
+            <small>Available ingestion data sources.</small>
+            <button id="btn-sources" class="secondary"><i class="ri-stack-line"></i>GET /ingestion/sources</button>
+            <div class="response" id="sources-response">No data yet.</div>
+          </section>
+
+          <section class="card grid-span">
+            <h2><i class="ri-add-circle-line"></i>Create Ingestion Job</h2>
+            <small>POST /ingestion/jobs</small>
+            <div class="row">
+              <div>
+                <label for="job-source">Source Type</label>
+                <select id="job-source">
+                  <option value="opencorporates">opencorporates</option>
+                  <option value="news_api">news_api</option>
+                </select>
+              </div>
+              <div>
+                <label for="job-case">Case ID (optional)</label>
+                <input id="job-case" placeholder="UUID (optional)" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="job-params">Parameters (JSON)</label>
+                <textarea id="job-params"></textarea>
+              </div>
+              <div>
+                <label for="job-meta">Metadata (JSON)</label>
+                <textarea id="job-meta">{
   "analyst": "tester",
   "priority": "high"
 }</textarea>
-          </div>
-        </div>
-        <div class="row">
-          <button id="btn-create" class="success">Create Job</button>
-          <button id="btn-clear-create" class="secondary">Clear</button>
-        </div>
-        <div class="response" id="create-response">No job created yet.</div>
-      </section>
+              </div>
+            </div>
+            <div class="row">
+              <button id="btn-create" class="success"><i class="ri-send-plane-line"></i>Create Job</button>
+              <button id="btn-clear-create" class="secondary"><i class="ri-eraser-line"></i>Clear</button>
+            </div>
+            <div class="response" id="create-response">No job created yet.</div>
+          </section>
 
-      <section class="card">
-        <h2>List Jobs</h2>
-        <small>GET /ingestion/jobs</small>
-        <div class="row">
-          <div>
-            <label for="filter-status">Status</label>
-            <input id="filter-status" placeholder="pending / success / failed" />
-          </div>
-          <div>
-            <label for="filter-source">Source</label>
-            <input id="filter-source" placeholder="opencorporates" />
-          </div>
-          <div>
-            <label for="filter-case">Case ID</label>
-            <input id="filter-case" placeholder="UUID" />
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label for="filter-limit">Limit</label>
-            <input id="filter-limit" type="number" min="1" value="25" />
-          </div>
-          <div>
-            <label for="filter-offset">Offset</label>
-            <input id="filter-offset" type="number" min="0" value="0" />
-          </div>
-        </div>
-        <button id="btn-list">Fetch Jobs</button>
-        <div class="response" id="list-response">No jobs fetched yet.</div>
-      </section>
+          <section class="card">
+            <h2><i class="ri-list-check-3"></i>List Jobs</h2>
+            <small>GET /ingestion/jobs</small>
+            <div class="row">
+              <div>
+                <label for="filter-status">Status</label>
+                <input id="filter-status" placeholder="pending / success / failed" />
+              </div>
+              <div>
+                <label for="filter-source">Source</label>
+                <input id="filter-source" placeholder="opencorporates" />
+              </div>
+              <div>
+                <label for="filter-case">Case ID</label>
+                <input id="filter-case" placeholder="UUID" />
+              </div>
+            </div>
+            <div class="row">
+              <div>
+                <label for="filter-limit">Limit</label>
+                <input id="filter-limit" type="number" min="1" value="25" />
+              </div>
+              <div>
+                <label for="filter-offset">Offset</label>
+                <input id="filter-offset" type="number" min="0" value="0" />
+              </div>
+            </div>
+            <button id="btn-list"><i class="ri-search-eye-line"></i>Fetch Jobs</button>
+            <div class="response" id="list-response">No jobs fetched yet.</div>
+          </section>
 
-      <section class="card">
-        <h2>Get Job</h2>
-        <small>GET /ingestion/jobs/{job_id}</small>
-        <label for="job-id">Job ID</label>
-        <input id="job-id" placeholder="UUID" />
-        <button id="btn-get-job" class="secondary">Fetch Job</button>
-        <div class="response" id="job-response">Waiting for job ID.</div>
-      </section>
+          <section class="card">
+            <h2><i class="ri-file-search-line"></i>Get Job</h2>
+            <small>GET /ingestion/jobs/{job_id}</small>
+            <label for="job-id">Job ID</label>
+            <input id="job-id" placeholder="UUID" />
+            <button id="btn-get-job" class="secondary"><i class="ri-search-line"></i>Fetch Job</button>
+            <div class="response" id="job-response">Waiting for job ID.</div>
+          </section>
 
-      <section class="card">
-        <h2>Job Stats</h2>
-        <small>GET /ingestion/jobs/{job_id}/stats</small>
-        <label for="stats-id">Job ID</label>
-        <input id="stats-id" placeholder="UUID" />
-        <button id="btn-stats" class="secondary">Fetch Stats</button>
-        <div class="response" id="stats-response">Waiting for stats.</div>
-      </section>
-    </main>
+          <section class="card">
+            <h2><i class="ri-bar-chart-2-line"></i>Job Stats</h2>
+            <small>GET /ingestion/jobs/{job_id}/stats</small>
+            <label for="stats-id">Job ID</label>
+            <input id="stats-id" placeholder="UUID" />
+            <button id="btn-stats" class="secondary"><i class="ri-bar-chart-grouped-line"></i>Fetch Stats</button>
+            <div class="response" id="stats-response">Waiting for stats.</div>
+          </section>
+        </main>
 
-    <footer>
-      Built for testing & visualization. Responses show HTTP status, timing, and payload.
-    </footer>
+        <footer>
+          Built for secure OSINT validation workflows. Responses show HTTP status, timing, and payload.
+        </footer>
+      </div>
+    </div>
 
     <script>
       const baseUrl = window.location.origin;
