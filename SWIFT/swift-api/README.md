@@ -55,6 +55,7 @@ docker-compose up swift-api
 Once running, visit:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+- **Dashboard UI**: http://localhost:8000/dashboard
 
 ## API Usage Examples
 

@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SWIFT API Dashboard</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #0b1220;
+        --panel: #121a2b;
+        --card: #0f172a;
+        --muted: #94a3b8;
+        --text: #e2e8f0;
+        --accent: #38bdf8;
+        --accent-2: #22c55e;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --border: #1e293b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      header {
+        padding: 24px 28px;
+        background: linear-gradient(135deg, #0b1220 0%, #111827 100%);
+        border-bottom: 1px solid var(--border);
+      }
+
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 26px;
+        letter-spacing: 0.3px;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      main {
+        padding: 24px 28px 40px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+      }
+
+      .card h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .card small {
+        color: var(--muted);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+      }
+
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      input, select, textarea {
+        width: 100%;
+        padding: 9px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+
+      button {
+        border: none;
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #0b1220;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button.secondary {
+        background: #334155;
+        color: var(--text);
+      }
+
+      button.success {
+        background: var(--accent-2);
+        color: #062312;
+      }
+
+      button.danger {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .response {
+        background: #0b1220;
+        border: 1px dashed #1f2a44;
+        border-radius: 10px;
+        padding: 12px;
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+        max-height: 280px;
+        overflow: auto;
+        white-space: pre-wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #0b1220;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+
+      .grid-span {
+        grid-column: span 2;
+      }
+
+      footer {
+        padding: 16px 28px 30px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .grid-span {
+          grid-column: span 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>SWIFT API Dashboard</h1>
+      <p>Interactive testing & visualization for the SWIFT API Gateway endpoints.</p>
+      <div class="badge" id="api-base">Base URL: <strong></strong></div>
+      <div class="badge"><span class="status-dot" id="health-dot"></span> Health: <span id="health-label">unknown</span></div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Health & Info</h2>
+        <small>Quick checks for API availability.</small>
+        <div class="row">
+          <button id="btn-health">Check /health</button>
+          <button id="btn-root" class="secondary">Get /</button>
+        </div>
+        <div class="response" id="health-response">Run a check to see response.</div>
+      </section>
+
+      <section class="card">
+        <h2>Sources</h2>
+        <small>Available ingestion data sources.</small>
+        <button id="btn-sources" class="secondary">GET /ingestion/sources</button>
+        <div class="response" id="sources-response">No data yet.</div>
+      </section>
+
+      <section class="card grid-span">
+        <h2>Create Ingestion Job</h2>
+        <small>POST /ingestion/jobs</small>
+        <div class="row">
+          <div>
+            <label for="job-source">Source Type</label>
+            <select id="job-source">
+              <option value="opencorporates">opencorporates</option>
+              <option value="news_api">news_api</option>
+            </select>
+          </div>
+          <div>
+            <label for="job-case">Case ID (optional)</label>
+            <input id="job-case" placeholder="UUID (optional)" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="job-params">Parameters (JSON)</label>
+            <textarea id="job-params">{
+  "company_name": "Tesla Inc",
+  "jurisdiction_code": "us_de"
+}</textarea>
+          </div>
+          <div>
+            <label for="job-meta">Metadata (JSON)</label>
+            <textarea id="job-meta">{
+  "analyst": "tester",
+  "priority": "high"
+}</textarea>
+          </div>
+        </div>
+        <div class="row">
+          <button id="btn-create" class="success">Create Job</button>
+          <button id="btn-clear-create" class="secondary">Clear</button>
+        </div>
+        <div class="response" id="create-response">No job created yet.</div>
+      </section>
+
+      <section class="card">
+        <h2>List Jobs</h2>
+        <small>GET /ingestion/jobs</small>
+        <div class="row">
+          <div>
+            <label for="filter-status">Status</label>
+            <input id="filter-status" placeholder="pending / success / failed" />
+          </div>
+          <div>
+            <label for="filter-source">Source</label>
+            <input id="filter-source" placeholder="opencorporates" />
+          </div>
+          <div>
+            <label for="filter-case">Case ID</label>
+            <input id="filter-case" placeholder="UUID" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="filter-limit">Limit</label>
+            <input id="filter-limit" type="number" min="1" value="25" />
+          </div>
+          <div>
+            <label for="filter-offset">Offset</label>
+            <input id="filter-offset" type="number" min="0" value="0" />
+          </div>
+        </div>
+        <button id="btn-list">Fetch Jobs</button>
+        <div class="response" id="list-response">No jobs fetched yet.</div>
+      </section>
+
+      <section class="card">
+        <h2>Get Job</h2>
+        <small>GET /ingestion/jobs/{job_id}</small>
+        <label for="job-id">Job ID</label>
+        <input id="job-id" placeholder="UUID" />
+        <button id="btn-get-job" class="secondary">Fetch Job</button>
+        <div class="response" id="job-response">Waiting for job ID.</div>
+      </section>
+
+      <section class="card">
+        <h2>Job Stats</h2>
+        <small>GET /ingestion/jobs/{job_id}/stats</small>
+        <label for="stats-id">Job ID</label>
+        <input id="stats-id" placeholder="UUID" />
+        <button id="btn-stats" class="secondary">Fetch Stats</button>
+        <div class="response" id="stats-response">Waiting for stats.</div>
+      </section>
+    </main>
+
+    <footer>
+      Built for testing & visualization. Responses show HTTP status, timing, and payload.
+    </footer>
+
+    <script>
+      const baseUrl = window.location.origin;
+      const setBadge = (text) => {
+        document.querySelector("#api-base strong").textContent = text;
+      };
+
+      const pretty = (value) => JSON.stringify(value, null, 2);
+      const updateResponse = (id, status, elapsed, data, error) => {
+        const target = document.getElementById(id);
+        const payload = error ? { error } : data;
+        target.textContent = `[${status}] ${elapsed} ms\n${pretty(payload)}`;
+      };
+
+      const request = async (method, path, body) => {
+        const started = performance.now();
+        const options = { method, headers: { "Content-Type": "application/json" } };
+        if (body) {
+          options.body = JSON.stringify(body);
+        }
+        const response = await fetch(path, options);
+        const elapsed = Math.round(performance.now() - started);
+        const text = await response.text();
+        let data = text;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch (err) {
+          data = { raw: text };
+        }
+        return { status: response.status, elapsed, data, ok: response.ok };
+      };
+
+      const safeJson = (value) => {
+        if (!value) return {};
+        try {
+          return JSON.parse(value);
+        } catch (err) {
+          throw new Error("Invalid JSON input.");
+        }
+      };
+
+      document.getElementById("btn-health").addEventListener("click", async () => {
+        const dot = document.getElementById("health-dot");
+        const label = document.getElementById("health-label");
+        try {
+          const res = await request("GET", "/health");
+          updateResponse("health-response", res.status, res.elapsed, res.data);
+          if (res.ok) {
+            dot.style.background = "#22c55e";
+            label.textContent = "healthy";
+          } else {
+            dot.style.background = "#ef4444";
+            label.textContent = "error";
+          }
+        } catch (err) {
+          updateResponse("health-response", "ERR", "-", null, err.message);
+          dot.style.background = "#ef4444";
+          label.textContent = "error";
+        }
+      });
+
+      document.getElementById("btn-root").addEventListener("click", async () => {
+        try {
+          const res = await request("GET", "/");
+          updateResponse("health-response", res.status, res.elapsed, res.data);
+        } catch (err) {
+          updateResponse("health-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-sources").addEventListener("click", async () => {
+        try {
+          const res = await request("GET", "/ingestion/sources");
+          updateResponse("sources-response", res.status, res.elapsed, res.data);
+        } catch (err) {
+          updateResponse("sources-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-create").addEventListener("click", async () => {
+        try {
+          const sourceType = document.getElementById("job-source").value;
+          const caseId = document.getElementById("job-case").value.trim();
+          const parameters = safeJson(document.getElementById("job-params").value);
+          const metadata = safeJson(document.getElementById("job-meta").value);
+          const payload = {
+            source_type: sourceType,
+            parameters,
+            metadata
+          };
+          if (caseId) {
+            payload.case_id = caseId;
+          }
+          const res = await request("POST", "/ingestion/jobs", payload);
+          updateResponse("create-response", res.status, res.elapsed, res.data);
+          if (res.ok && res.data && res.data.id) {
+            document.getElementById("job-id").value = res.data.id;
+            document.getElementById("stats-id").value = res.data.id;
+          }
+        } catch (err) {
+          updateResponse("create-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-clear-create").addEventListener("click", () => {
+        document.getElementById("job-case").value = "";
+        document.getElementById("job-params").value = "{}";
+        document.getElementById("job-meta").value = "{}";
+        document.getElementById("create-response").textContent = "No job created yet.";
+      });
+
+      document.getElementById("btn-list").addEventListener("click", async () => {
+        const params = new URLSearchParams();
+        const status = document.getElementById("filter-status").value.trim();
+        const source = document.getElementById("filter-source").value.trim();
+        const caseId = document.getElementById("filter-case").value.trim();
+        const limit = document.getElementById("filter-limit").value;
+        const offset = document.getElementById("filter-offset").value;
+        if (status) params.set("status", status);
+        if (source) params.set("source_type", source);
+        if (caseId) params.set("case_id", caseId);
+        if (limit) params.set("limit", limit);
+        if (offset) params.set("offset", offset);
+        const path = `/ingestion/jobs${params.toString() ? "?" + params.toString() : ""}`;
+        try {
+          const res = await request("GET", path);
+          updateResponse("list-response", res.status, res.elapsed, res.data);
+        } catch (err) {
+          updateResponse("list-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-get-job").addEventListener("click", async () => {
+        const id = document.getElementById("job-id").value.trim();
+        if (!id) {
+          updateResponse("job-response", "ERR", "-", null, "Job ID is required.");
+          return;
+        }
+        try {
+          const res = await request("GET", `/ingestion/jobs/${id}`);
+          updateResponse("job-response", res.status, res.elapsed, res.data);
+        } catch (err) {
+          updateResponse("job-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-stats").addEventListener("click", async () => {
+        const id = document.getElementById("stats-id").value.trim();
+        if (!id) {
+          updateResponse("stats-response", "ERR", "-", null, "Job ID is required.");
+          return;
+        }
+        try {
+          const res = await request("GET", `/ingestion/jobs/${id}/stats`);
+          updateResponse("stats-response", res.status, res.elapsed, res.data);
+        } catch (err) {
+          updateResponse("stats-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      setBadge(baseUrl);
+    </script>
+  </body>
+</html>

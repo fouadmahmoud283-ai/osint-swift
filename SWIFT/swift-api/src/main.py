@@ -1,6 +1,9 @@
 """FastAPI application for SWIFT API Gateway."""
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
@@ -13,6 +16,8 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 # Configure CORS
 app.add_middleware(
@@ -43,5 +48,13 @@ async def root():
     return {
         "message": "SWIFT API Gateway",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "dashboard": "/dashboard"
     }
+
+
+@app.get("/dashboard")
+@app.get("/dashboard/")
+async def dashboard():
+    """Dashboard UI for API testing and visualization."""
+    return FileResponse(STATIC_DIR / "dashboard.html")
