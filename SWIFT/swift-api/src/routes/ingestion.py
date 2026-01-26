@@ -14,7 +14,7 @@ router = APIRouter(prefix="/ingestion", tags=["Ingestion"])
 ingestion_client = IngestionClient()
 
 
-def _job_from_payload(job: dict) -> JobResponse:
+def _job_from_payload(job: dict) -> "JobResponse":
     return JobResponse(
         id=str(job.get("id")),
         source_type=job.get("source_type"),
@@ -33,7 +33,7 @@ def _job_from_payload(job: dict) -> JobResponse:
     )
 
 
-def _stats_from_payload(stats: dict) -> JobStatsResponse:
+def _stats_from_payload(stats: dict) -> "JobStatsResponse":
     return JobStatsResponse(
         job_id=str(stats.get("job_id")),
         status=stats.get("status"),
