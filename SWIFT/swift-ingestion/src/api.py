@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException, status
 from .db import get_db
 from .models import IngestionJobCreate, IngestionJobStats, JobStatus, SourceType
 from .services.ingestion import IngestionService
-from .storage import JobRepository
+from .storage import EvidenceRepository, JobRepository, object_storage
 from .utils.logging import get_logger
 from .services.worker import celery_app
 
@@ -22,6 +22,7 @@ app = FastAPI(
 )
 
 job_repo = JobRepository()
+evidence_repo = EvidenceRepository()
 service = IngestionService()
 
 
@@ -54,6 +55,25 @@ def _serialize_stats(stats: IngestionJobStats) -> dict:
         "failed_items": stats.failed_items,
         "avg_item_size_bytes": stats.avg_item_size_bytes,
         "total_size_bytes": stats.total_size_bytes,
+    }
+
+
+def _serialize_evidence_db(evidence) -> dict:
+    return {
+        "id": str(evidence.id),
+        "job_id": str(evidence.job_id),
+        "source_type": evidence.source_type.value,
+        "evidence_type": evidence.evidence_type.value,
+        "source_url": evidence.source_url,
+        "source_identifier": evidence.source_identifier,
+        "source_timestamp": evidence.source_timestamp.isoformat() if evidence.source_timestamp else None,
+        "ingested_at": evidence.ingested_at.isoformat() if evidence.ingested_at else None,
+        "checksum": evidence.checksum,
+        "file_size_bytes": evidence.file_size_bytes,
+        "content_type": evidence.content_type,
+        "object_key": evidence.object_key,
+        "metadata": evidence.metadata_json,
+        "processing_status": evidence.processing_status,
     }
 
 
@@ -153,3 +173,57 @@ async def get_job_stats(job_id: str):
             raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
     return _serialize_stats(stats)
+
+
+@app.get("/evidence")
+async def list_evidence(job_id: str, limit: int = 100, offset: int = 0):
+    try:
+        job_uuid = UUID(job_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid job_id format")
+
+    with get_db() as session:
+        evidence_items = evidence_repo.list_evidence_by_job(
+            session,
+            job_id=job_uuid,
+            limit=limit,
+            offset=offset,
+        )
+        return [_serialize_evidence_db(item) for item in evidence_items]
+
+
+@app.get("/evidence/{evidence_id}")
+async def get_evidence(evidence_id: str):
+    try:
+        evidence_uuid = UUID(evidence_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid evidence_id format")
+
+    with get_db() as session:
+        evidence = evidence_repo.get_evidence(session, evidence_uuid)
+        if not evidence:
+            raise HTTPException(status_code=404, detail=f"Evidence {evidence_id} not found")
+        return _serialize_evidence_db(evidence)
+
+
+@app.get("/evidence/{evidence_id}/content")
+async def get_evidence_content(evidence_id: str):
+    try:
+        evidence_uuid = UUID(evidence_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid evidence_id format")
+
+    with get_db() as session:
+        evidence = evidence_repo.get_evidence(session, evidence_uuid)
+        if not evidence:
+            raise HTTPException(status_code=404, detail=f"Evidence {evidence_id} not found")
+
+        if evidence.content_type == "application/json":
+            content = object_storage.retrieve_json_evidence(evidence.object_key)
+        else:
+            content = object_storage.retrieve_evidence(evidence.object_key).decode("utf-8", errors="ignore")
+
+        return {
+            "evidence": _serialize_evidence_db(evidence),
+            "content": content,
+        }

@@ -69,6 +69,30 @@ class IngestionClient:
         response = await self.client.get(f"{self.base_url}/jobs/{job_id}/stats")
         response.raise_for_status()
         return response.json()
+
+    async def list_evidence(
+        self,
+        job_id: UUID,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List evidence documents for a job."""
+        params = {"job_id": str(job_id), "limit": limit, "offset": offset}
+        response = await self.client.get(f"{self.base_url}/evidence", params=params)
+        response.raise_for_status()
+        return response.json()
+
+    async def get_evidence(self, evidence_id: UUID) -> Dict[str, Any]:
+        """Get evidence metadata by ID."""
+        response = await self.client.get(f"{self.base_url}/evidence/{evidence_id}")
+        response.raise_for_status()
+        return response.json()
+
+    async def get_evidence_content(self, evidence_id: UUID) -> Dict[str, Any]:
+        """Get evidence content by ID."""
+        response = await self.client.get(f"{self.base_url}/evidence/{evidence_id}/content")
+        response.raise_for_status()
+        return response.json()
     
     async def close(self):
         """Close the HTTP client."""

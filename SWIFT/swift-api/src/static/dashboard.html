@@ -567,6 +567,32 @@
             <button id="btn-stats" class="secondary"><i class="ri-bar-chart-grouped-line"></i>Fetch Stats</button>
             <div class="response" id="stats-response">Waiting for stats.</div>
           </section>
+
+          <section class="card grid-span">
+            <h2><i class="ri-database-2-line"></i>Evidence Store</h2>
+            <div class="toggle-row">
+              <small>Evidence listing & content retrieval</small>
+              <select class="view-toggle" data-target="evidence-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
+            <div class="row">
+              <div>
+                <label for="evidence-job-id">Job ID</label>
+                <input id="evidence-job-id" placeholder="UUID" />
+              </div>
+              <div>
+                <label for="evidence-id">Evidence ID</label>
+                <input id="evidence-id" placeholder="UUID" />
+              </div>
+            </div>
+            <div class="row">
+              <button id="btn-evidence-list" class="secondary"><i class="ri-folder-search-line"></i>List Evidence</button>
+              <button id="btn-evidence-content"><i class="ri-file-search-line"></i>Get Evidence Content</button>
+            </div>
+            <div class="response" id="evidence-response">No evidence loaded yet.</div>
+          </section>
         </main>
 
         <footer>
@@ -897,6 +923,37 @@
           updateResponse("stats-response", res.status, res.elapsed, res.data);
         } catch (err) {
           updateResponse("stats-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-evidence-list").addEventListener("click", async () => {
+        const jobId = document.getElementById("evidence-job-id").value.trim();
+        if (!jobId) {
+          updateResponse("evidence-response", "ERR", "-", null, "Job ID is required.");
+          return;
+        }
+        try {
+          const res = await request("GET", `/ingestion/evidence?job_id=${jobId}`);
+          updateResponse("evidence-response", res.status, res.elapsed, res.data);
+          if (res.ok && Array.isArray(res.data) && res.data.length > 0) {
+            document.getElementById("evidence-id").value = res.data[0].id;
+          }
+        } catch (err) {
+          updateResponse("evidence-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-evidence-content").addEventListener("click", async () => {
+        const evidenceId = document.getElementById("evidence-id").value.trim();
+        if (!evidenceId) {
+          updateResponse("evidence-response", "ERR", "-", null, "Evidence ID is required.");
+          return;
+        }
+        try {
+          const res = await request("GET", `/ingestion/evidence/${evidenceId}/content`);
+          updateResponse("evidence-response", res.status, res.elapsed, res.data);
+        } catch (err) {
+          updateResponse("evidence-response", "ERR", "-", null, err.message);
         }
       });
 

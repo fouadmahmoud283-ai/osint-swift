@@ -87,6 +87,32 @@ class JobStatsResponse(BaseModel):
     total_size_bytes: int
 
 
+class EvidenceResponse(BaseModel):
+    """Evidence metadata response."""
+
+    id: str
+    job_id: str
+    source_type: str
+    evidence_type: str
+    source_url: Optional[str]
+    source_identifier: Optional[str]
+    source_timestamp: Optional[str]
+    ingested_at: Optional[str]
+    checksum: str
+    file_size_bytes: int
+    content_type: str
+    object_key: str
+    metadata: dict
+    processing_status: str
+
+
+class EvidenceContentResponse(BaseModel):
+    """Evidence content response."""
+
+    evidence: EvidenceResponse
+    content: dict | str
+
+
 @router.post("/jobs", response_model=JobResponse, status_code=status.HTTP_201_CREATED)
 async def create_ingestion_job(request: CreateJobRequest):
     """
@@ -184,6 +210,63 @@ async def get_job_stats(job_id: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid job ID format"
+        )
+
+
+@router.get("/evidence", response_model=List[EvidenceResponse])
+async def list_evidence(job_id: str, limit: int = 100, offset: int = 0):
+    """List evidence for a job."""
+    try:
+        job_uuid = UUID(job_id)
+        evidence_items = await ingestion_client.list_evidence(job_uuid, limit=limit, offset=offset)
+        return evidence_items
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid job ID format"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list evidence: {str(e)}"
+        )
+
+
+@router.get("/evidence/{evidence_id}", response_model=EvidenceResponse)
+async def get_evidence(evidence_id: str):
+    """Get evidence metadata by ID."""
+    try:
+        evidence_uuid = UUID(evidence_id)
+        evidence = await ingestion_client.get_evidence(evidence_uuid)
+        return evidence
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid evidence ID format"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get evidence: {str(e)}"
+        )
+
+
+@router.get("/evidence/{evidence_id}/content", response_model=EvidenceContentResponse)
+async def get_evidence_content(evidence_id: str):
+    """Get evidence content by ID."""
+    try:
+        evidence_uuid = UUID(evidence_id)
+        content = await ingestion_client.get_evidence_content(evidence_uuid)
+        return content
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid evidence ID format"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get evidence content: {str(e)}"
         )
 
 
