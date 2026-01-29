@@ -297,6 +297,14 @@ class IngestionService:
             config['api_key'] = settings.news_api_key
             config['rate_limit_per_minute'] = 6  # Free tier: 100 requests per 15 min
         
+        elif source_type == SourceType.OSINT_SEARCH:
+            if not settings.apify_api_token:
+                raise ValueError("OSINT search API token not configured")
+            config['api_token'] = settings.apify_api_token
+            if settings.osint_actor_id:
+                config['actor_id'] = settings.osint_actor_id
+            config['timeout_seconds'] = 120
+        
         return config
     
     def get_job(self, job_id: UUID) -> Optional[IngestionJob]:

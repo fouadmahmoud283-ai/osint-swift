@@ -7,6 +7,7 @@ from ..utils.logging import get_logger
 from .base import BaseConnector
 from .opencorporates import OpenCorporatesConnector
 from .newsapi import NewsAPIConnector
+from .osint_search import OsintSearchConnector
 
 logger = get_logger(__name__)
 
@@ -66,3 +67,4 @@ class ConnectorRegistry:
 # Register built-in connectors
 ConnectorRegistry.register(SourceType.OPENCORPORATES, OpenCorporatesConnector)
 ConnectorRegistry.register(SourceType.NEWS_API, NewsAPIConnector)
+ConnectorRegistry.register(SourceType.OSINT_SEARCH, OsintSearchConnector)

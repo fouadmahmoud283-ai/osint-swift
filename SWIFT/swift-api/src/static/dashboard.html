@@ -260,6 +260,62 @@
         white-space: pre-wrap;
       }
 
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .view-toggle {
+        border: 1px solid rgba(31, 42, 68, 0.8);
+        background: var(--card);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .response-header {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      .response-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      .response-table td {
+        padding: 6px 8px;
+        border-bottom: 1px solid rgba(31, 42, 68, 0.5);
+        vertical-align: top;
+      }
+
+      .response-key {
+        color: var(--accent);
+        font-weight: 600;
+        width: 32%;
+      }
+
+      .response-list {
+        margin: 0;
+        padding-left: 16px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .response-pill {
+        display: inline-flex;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(74, 215, 255, 0.12);
+        color: var(--accent);
+        font-size: 11px;
+      }
+
       .grid-span {
         grid-column: span 2;
       }
@@ -309,6 +365,7 @@
           <div class="nav-item"><i class="ri-dashboard-2-line"></i>Mission Control</div>
           <div class="nav-item"><i class="ri-radar-line"></i>Ingestion Telemetry</div>
           <div class="nav-item"><i class="ri-database-2-line"></i>Evidence Store</div>
+          <div class="nav-item"><i class="ri-planet-line"></i>OSINT Scraping</div>
         </div>
         <div class="nav-section">
           <div class="nav-title">Security</div>
@@ -331,7 +388,13 @@
         <main>
           <section class="card">
             <h2><i class="ri-heart-pulse-line"></i>Health & Info</h2>
-            <small>Quick checks for API availability.</small>
+            <div class="toggle-row">
+              <small>Quick checks for API availability.</small>
+              <select class="view-toggle" data-target="health-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
             <div class="row">
               <button id="btn-health"><i class="ri-pulse-line"></i>Check /health</button>
               <button id="btn-root" class="secondary"><i class="ri-home-4-line"></i>Get /</button>
@@ -341,20 +404,33 @@
 
           <section class="card">
             <h2><i class="ri-database-line"></i>Sources</h2>
-            <small>Available ingestion data sources.</small>
+            <div class="toggle-row">
+              <small>Available ingestion data sources.</small>
+              <select class="view-toggle" data-target="sources-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
             <button id="btn-sources" class="secondary"><i class="ri-stack-line"></i>GET /ingestion/sources</button>
             <div class="response" id="sources-response">No data yet.</div>
           </section>
 
           <section class="card grid-span">
             <h2><i class="ri-add-circle-line"></i>Create Ingestion Job</h2>
-            <small>POST /ingestion/jobs</small>
+            <div class="toggle-row">
+              <small>POST /ingestion/jobs</small>
+              <select class="view-toggle" data-target="create-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
             <div class="row">
               <div>
                 <label for="job-source">Source Type</label>
                 <select id="job-source">
                   <option value="opencorporates">opencorporates</option>
                   <option value="news_api">news_api</option>
+                  <option value="osint_search">osint_search</option>
                 </select>
               </div>
               <div>
@@ -382,9 +458,58 @@
             <div class="response" id="create-response">No job created yet.</div>
           </section>
 
+          <section class="card grid-span">
+            <h2><i class="ri-planet-line"></i>OSINT Scraping</h2>
+            <div class="toggle-row">
+              <small>Targeted digital footprint sweep (POST /ingestion/jobs)</small>
+              <select class="view-toggle" data-target="osint-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
+            <div class="row">
+              <div>
+                <label for="osint-query">Search Query</label>
+                <input id="osint-query" placeholder="email, username, or phone" />
+              </div>
+              <div>
+                <label for="osint-type">Search Type</label>
+                <select id="osint-type">
+                  <option value="email">email</option>
+                  <option value="username">username</option>
+                  <option value="phone">phone</option>
+                </select>
+              </div>
+              <div>
+                <label for="osint-depth">Scan Depth</label>
+                <select id="osint-depth">
+                  <option value="standard">standard</option>
+                  <option value="deep">deep</option>
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="grid-span">
+                <label for="osint-categories">Categories (comma-separated)</label>
+                <textarea id="osint-categories">social, shopping, tech, music, crypto, finance, news, blog, coding, dating, photo, forum, video, gaming</textarea>
+              </div>
+            </div>
+            <div class="row">
+              <button id="btn-osint" class="success"><i class="ri-search-eye-line"></i>Run OSINT Sweep</button>
+              <button id="btn-osint-clear" class="secondary"><i class="ri-eraser-line"></i>Clear</button>
+            </div>
+            <div class="response" id="osint-response">Awaiting input.</div>
+          </section>
+
           <section class="card">
             <h2><i class="ri-list-check-3"></i>List Jobs</h2>
-            <small>GET /ingestion/jobs</small>
+            <div class="toggle-row">
+              <small>GET /ingestion/jobs</small>
+              <select class="view-toggle" data-target="list-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
             <div class="row">
               <div>
                 <label for="filter-status">Status</label>
@@ -415,7 +540,13 @@
 
           <section class="card">
             <h2><i class="ri-file-search-line"></i>Get Job</h2>
-            <small>GET /ingestion/jobs/{job_id}</small>
+            <div class="toggle-row">
+              <small>GET /ingestion/jobs/{job_id}</small>
+              <select class="view-toggle" data-target="job-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
             <label for="job-id">Job ID</label>
             <input id="job-id" placeholder="UUID" />
             <button id="btn-get-job" class="secondary"><i class="ri-search-line"></i>Fetch Job</button>
@@ -424,7 +555,13 @@
 
           <section class="card">
             <h2><i class="ri-bar-chart-2-line"></i>Job Stats</h2>
-            <small>GET /ingestion/jobs/{job_id}/stats</small>
+            <div class="toggle-row">
+              <small>GET /ingestion/jobs/{job_id}/stats</small>
+              <select class="view-toggle" data-target="stats-response">
+                <option value="json">JSON</option>
+                <option value="human">Human</option>
+              </select>
+            </div>
             <label for="stats-id">Job ID</label>
             <input id="stats-id" placeholder="UUID" />
             <button id="btn-stats" class="secondary"><i class="ri-bar-chart-grouped-line"></i>Fetch Stats</button>
@@ -445,10 +582,53 @@
       };
 
       const pretty = (value) => JSON.stringify(value, null, 2);
-      const updateResponse = (id, status, elapsed, data, error) => {
+      const responseStore = new Map();
+      const responseMode = new Map();
+
+      const renderHumanValue = (value) => {
+        if (value === null || value === undefined) {
+          return "<span class=\"response-pill\">null</span>";
+        }
+        if (typeof value === "string") {
+          return `<span>${value}</span>`;
+        }
+        if (typeof value === "number" || typeof value === "boolean") {
+          return `<span class=\"response-pill\">${value}</span>`;
+        }
+        if (Array.isArray(value)) {
+          const items = value
+            .map((item) => `<li>${renderHumanValue(item)}</li>`)
+            .join("");
+          return `<ul class=\"response-list\">${items}</ul>`;
+        }
+        if (typeof value === "object") {
+          const rows = Object.entries(value)
+            .map(
+              ([key, val]) =>
+                `<tr><td class=\"response-key\">${key}</td><td>${renderHumanValue(val)}</td></tr>`
+            )
+            .join("");
+          return `<table class=\"response-table\"><tbody>${rows}</tbody></table>`;
+        }
+        return `<span>${String(value)}</span>`;
+      };
+
+      const renderResponse = (id) => {
         const target = document.getElementById(id);
-        const payload = error ? { error } : data;
-        target.textContent = `[${status}] ${elapsed} ms\n${pretty(payload)}`;
+        const entry = responseStore.get(id);
+        if (!entry || !target) return;
+        const mode = responseMode.get(id) || "json";
+        const payload = entry.error ? { error: entry.error } : entry.data;
+        if (mode === "human") {
+          target.innerHTML = `<div class=\"response-header\">[${entry.status}] ${entry.elapsed} ms</div>${renderHumanValue(payload)}`;
+        } else {
+          target.textContent = `[${entry.status}] ${entry.elapsed} ms\n${pretty(payload)}`;
+        }
+      };
+
+      const updateResponse = (id, status, elapsed, data, error) => {
+        responseStore.set(id, { status, elapsed, data, error });
+        renderResponse(id);
       };
 
       const request = async (method, path, body) => {
@@ -491,6 +671,32 @@
           sort_by: "relevancy",
           page_size: 20,
           max_articles: 25
+        },
+        osint_search: {
+          categories: [
+            "social",
+            "shopping",
+            "tech",
+            "music",
+            "crypto",
+            "finance",
+            "news",
+            "blog",
+            "coding",
+            "dating",
+            "photo",
+            "forum",
+            "video",
+            "gaming"
+          ],
+          exportFormats: ["json"],
+          extractData: true,
+          printErrors: false,
+          recursiveSearch: false,
+          reportSorting: "default",
+          scanDepth: "deep",
+          searchQuery: "fouadmahmoud281@gmail.com",
+          searchType: "email"
         }
       };
 
@@ -562,6 +768,12 @@
             updateResponse("create-response", "ERR", "-", null, "opencorporates requires a 'company_name' field.");
             return;
           }
+          if (sourceType === "osint_search") {
+            if (!parameters.searchQuery || !parameters.searchType) {
+              updateResponse("create-response", "ERR", "-", null, "osint_search requires 'searchQuery' and 'searchType'.");
+              return;
+            }
+          }
           const payload = {
             source_type: sourceType,
             parameters,
@@ -609,6 +821,55 @@
         }
       });
 
+      document.getElementById("btn-osint").addEventListener("click", async () => {
+        try {
+          const searchQuery = document.getElementById("osint-query").value.trim();
+          const searchType = document.getElementById("osint-type").value;
+          const scanDepth = document.getElementById("osint-depth").value;
+          if (!searchQuery) {
+            updateResponse("osint-response", "ERR", "-", null, "Search query is required.");
+            return;
+          }
+          const categoriesRaw = document.getElementById("osint-categories").value;
+          const categories = categoriesRaw
+            .split(",")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+          const parameters = {
+            searchQuery,
+            searchType,
+            scanDepth,
+            categories,
+            exportFormats: ["json"],
+            extractData: true,
+            recursiveSearch: false,
+            reportSorting: "default",
+            printErrors: false
+          };
+          const payload = {
+            source_type: "osint_search",
+            parameters,
+            metadata: { channel: "osint-dashboard" }
+          };
+          const res = await request("POST", "/ingestion/jobs", payload);
+          updateResponse("osint-response", res.status, res.elapsed, res.data);
+          if (res.ok && res.data && res.data.id) {
+            document.getElementById("job-id").value = res.data.id;
+            document.getElementById("stats-id").value = res.data.id;
+          }
+        } catch (err) {
+          updateResponse("osint-response", "ERR", "-", null, err.message);
+        }
+      });
+
+      document.getElementById("btn-osint-clear").addEventListener("click", () => {
+        document.getElementById("osint-query").value = "";
+        document.getElementById("osint-type").value = "email";
+        document.getElementById("osint-depth").value = "standard";
+        document.getElementById("osint-categories").value = "social, shopping, tech, music, crypto, finance, news, blog, coding, dating, photo, forum, video, gaming";
+        document.getElementById("osint-response").textContent = "Awaiting input.";
+      });
+
       document.getElementById("btn-get-job").addEventListener("click", async () => {
         const id = document.getElementById("job-id").value.trim();
         if (!id) {
@@ -635,6 +896,15 @@
         } catch (err) {
           updateResponse("stats-response", "ERR", "-", null, err.message);
         }
+      });
+
+      document.querySelectorAll(".view-toggle").forEach((toggle) => {
+        const targetId = toggle.dataset.target;
+        responseMode.set(targetId, toggle.value);
+        toggle.addEventListener("change", (event) => {
+          responseMode.set(targetId, event.target.value);
+          renderResponse(targetId);
+        });
       });
 
       setBadge(baseUrl);

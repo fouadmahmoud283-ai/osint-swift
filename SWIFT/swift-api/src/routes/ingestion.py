@@ -229,6 +229,53 @@ async def list_sources():
                     "sort_by": "relevancy",
                     "max_articles": 50
                 }
+            },
+            {
+                "type": "osint_search",
+                "name": "OSINT Search",
+                "description": "Deep digital footprint discovery and profile scanning",
+                "free_tier": False,
+                "parameters": {
+                    "searchQuery": "string (required)",
+                    "searchType": "string (required: email, username, phone)",
+                    "scanDepth": "string (optional: standard, deep)",
+                    "categories": "array (optional)",
+                    "exportFormats": "array (optional, default ['json'])",
+                    "extractData": "boolean (optional)",
+                    "recursiveSearch": "boolean (optional)",
+                    "reportSorting": "string (optional)",
+                    "timeout": "integer (optional, minutes)",
+                    "maxConcurrency": "integer (optional)",
+                    "retries": "integer (optional)",
+                    "printErrors": "boolean (optional)",
+                    "proxyConfiguration": "object (optional)"
+                },
+                "example": {
+                    "searchQuery": "fouadmahmoud281@gmail.com",
+                    "searchType": "email",
+                    "scanDepth": "deep",
+                    "categories": [
+                        "social",
+                        "shopping",
+                        "tech",
+                        "music",
+                        "crypto",
+                        "finance",
+                        "news",
+                        "blog",
+                        "coding",
+                        "dating",
+                        "photo",
+                        "forum",
+                        "video",
+                        "gaming"
+                    ],
+                    "exportFormats": ["json"],
+                    "extractData": True,
+                    "printErrors": False,
+                    "recursiveSearch": False,
+                    "reportSorting": "default"
+                }
             }
         ]
     }

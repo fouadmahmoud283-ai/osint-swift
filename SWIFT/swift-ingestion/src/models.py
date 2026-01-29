@@ -24,6 +24,7 @@ class SourceType(str, Enum):
     
     OPENCORPORATES = "opencorporates"
     NEWS_API = "news_api"
+    OSINT_SEARCH = "osint_search"
     RSS_FEED = "rss_feed"
     WEB_SCRAPER = "web_scraper"
     MANUAL_UPLOAD = "manual_upload"

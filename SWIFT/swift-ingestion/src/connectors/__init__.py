@@ -3,6 +3,7 @@
 from .base import BaseConnector, ConnectorResult
 from .opencorporates import OpenCorporatesConnector
 from .newsapi import NewsAPIConnector
+from .osint_search import OsintSearchConnector
 from .registry import ConnectorRegistry
 
 __all__ = [
@@ -10,5 +11,6 @@ __all__ = [
     'ConnectorResult',
     'OpenCorporatesConnector',
     'NewsAPIConnector',
+    'OsintSearchConnector',
     'ConnectorRegistry',
 ]

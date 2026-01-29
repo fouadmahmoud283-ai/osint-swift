@@ -54,6 +54,14 @@ class Settings(BaseSettings):
         default=None,
         description="News API key"
     )
+    apify_api_token: Optional[str] = Field(
+        default=None,
+        description="OSINT automation API token"
+    )
+    osint_actor_id: Optional[str] = Field(
+        default=None,
+        description="OSINT automation actor id"
+    )
 
     # Application Settings
     log_level: str = Field(default="INFO", description="Logging level")
