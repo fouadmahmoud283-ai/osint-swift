@@ -87,8 +87,11 @@ class OsintSearchConnector(BaseConnector):
             "maxConcurrency": parameters.get("maxConcurrency", 50),
             "retries": parameters.get("retries", 1),
             "printErrors": parameters.get("printErrors", False),
-            "proxyConfiguration": parameters.get("proxyConfiguration"),
         }
+
+        proxy_config = parameters.get("proxyConfiguration")
+        if isinstance(proxy_config, dict):
+            run_input["proxyConfiguration"] = proxy_config
 
         run = await self._run_actor(run_input)
         dataset_id = run.get("defaultDatasetId")
